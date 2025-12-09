@@ -1,0 +1,37 @@
+Sample Document for RAG Evaluation Testing
+
+Introduction
+This is a sample document used to test the RAG Evaluation Platform. It contains multiple sections with different types of information that can be used for retrieval-augmented generation testing.
+
+Section 1: Background Information
+RAG (Retrieval-Augmented Generation) systems combine information retrieval with large language models to provide more accurate and contextually relevant responses. These systems first retrieve relevant documents or passages from a knowledge base, then use those retrieved items as context for generating responses.
+
+Section 2: Key Components
+The main components of a RAG system include:
+- Document processing and chunking strategies
+- Embedding models for semantic similarity
+- Vector databases for efficient retrieval
+- Reranking mechanisms for result optimization
+- Language models for response generation
+
+Section 3: Evaluation Metrics
+Common metrics for evaluating RAG systems include:
+- Faithfulness: Does the response align with retrieved context?
+- Context Recall: Is all relevant information retrieved?
+- Context Precision: Is retrieved information relevant?
+- Answer Relevancy: Does the answer address the question?
+- Factual Correctness: Is the information accurate?
+
+Section 4: Best Practices
+When implementing a RAG system, consider:
+- Choosing appropriate chunk sizes based on your domain
+- Balancing semantic and keyword-based retrieval
+- Implementing reranking for better precision
+- Using ensemble methods to combine multiple approaches
+- Regularly evaluating system performance
+
+Section 5: Conclusion
+RAG systems represent a powerful approach to grounding language model responses in factual information. By carefully evaluating different retrieval strategies, developers can optimize their systems for specific use cases and domains.
+
+Additional Information
+This document contains sufficient content to test various retrieval strategies including simple recursive chunking, semantic chunking, and advanced ensemble approaches with BM25 and reranking capabilities.

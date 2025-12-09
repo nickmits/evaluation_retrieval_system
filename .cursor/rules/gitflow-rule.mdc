@@ -1,0 +1,385 @@
+---
+alwaysApply: true
+---
+
+# Git Workflow Rules - Gitflow Process
+
+## Branch Structure
+
+### Main Branches (Permanent)
+- **`main`** (or `master`): Production-ready code only. Never commit directly to main.
+- **`develop`**: Integration branch for features. Latest development changes.
+
+### Supporting Branches (Temporary)
+
+#### Feature Branches
+- **Naming**: `feature/<ticket-number>-<short-description>` or `feature/<short-description>`
+- **Examples**: 
+  - `feature/RAG-123-add-document-upload`
+  - `feature/fastapi-backend-setup`
+- **Branch from**: `develop`
+- **Merge into**: `develop`
+- **Purpose**: New features or enhancements
+
+#### Bugfix Branches
+- **Naming**: `bugfix/<ticket-number>-<short-description>` or `bugfix/<short-description>`
+- **Examples**: 
+  - `bugfix/RAG-456-fix-evaluation-crash`
+  - `bugfix/streamlit-memory-leak`
+- **Branch from**: `develop`
+- **Merge into**: `develop`
+- **Purpose**: Fix bugs in development
+
+#### Release Branches
+- **Naming**: `release/<version>` (e.g., `release/v1.0.0`, `release/v1.2.0`)
+- **Branch from**: `develop`
+- **Merge into**: Both `main` and `develop`
+- **Purpose**: Prepare for production release (version bumps, minor fixes, documentation)
+
+#### Hotfix Branches
+- **Naming**: `hotfix/<version>` or `hotfix/<short-description>`
+- **Examples**: 
+  - `hotfix/v1.0.1-critical-security-fix`
+  - `hotfix/api-key-validation`
+- **Branch from**: `main`
+- **Merge into**: Both `main` and `develop`
+- **Purpose**: Urgent fixes for production issues
+
+## Workflow Commands
+
+### Starting a New Feature
+```bash
+# Make sure develop is up to date
+git checkout develop
+git pull origin develop
+
+# Create and switch to new feature branch
+git checkout -b feature/your-feature-name
+
+# Work on your feature...
+git add .
+git commit -m "feat: add document upload API endpoint"
+
+# Push to remote
+git push -u origin feature/your-feature-name
+```
+
+### Starting a Bugfix
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b bugfix/fix-description
+# Make changes, commit, push
+```
+
+### Creating a Release
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b release/v1.0.0
+
+# Update version numbers, CHANGELOG, etc.
+git commit -m "chore: prepare release v1.0.0"
+
+# Merge to main
+git checkout main
+git merge --no-ff release/v1.0.0
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin main --tags
+
+# Merge back to develop
+git checkout develop
+git merge --no-ff release/v1.0.0
+git push origin develop
+
+# Delete release branch
+git branch -d release/v1.0.0
+```
+
+### Creating a Hotfix
+```bash
+git checkout main
+git pull origin main
+git checkout -b hotfix/v1.0.1-fix-description
+
+# Make urgent fix
+git commit -m "fix: critical security vulnerability"
+
+# Merge to main
+git checkout main
+git merge --no-ff hotfix/v1.0.1-fix-description
+git tag -a v1.0.1 -m "Hotfix version 1.0.1"
+git push origin main --tags
+
+# Merge to develop
+git checkout develop
+git merge --no-ff hotfix/v1.0.1-fix-description
+git push origin develop
+
+# Delete hotfix branch
+git branch -d hotfix/v1.0.1-fix-description
+```
+
+## Commit Message Standards
+
+### Format
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+- **feat**: New feature
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Code style changes (formatting, no logic change)
+- **refactor**: Code refactoring (no feature change)
+- **perf**: Performance improvements
+- **test**: Adding or updating tests
+- **chore**: Build tasks, dependencies, etc.
+- **ci**: CI/CD changes
+
+### Examples
+```bash
+# Feature
+git commit -m "feat(backend): add FastAPI document upload endpoint"
+
+# Bug fix
+git commit -m "fix(evaluation): resolve memory leak in RAGAS evaluation"
+
+# Documentation
+git commit -m "docs(readme): update installation instructions"
+
+# Refactor
+git commit -m "refactor(services): extract retrieval system factory"
+
+# With body and breaking change
+git commit -m "feat(api): migrate from Streamlit to FastAPI
+
+- Add REST API endpoints
+- Implement HTTP polling for real-time updates
+- Add Pydantic models for validation
+
+BREAKING CHANGE: Streamlit app is deprecated, use new API"
+```
+
+## Pull Request Guidelines
+
+### Before Creating PR
+1. Ensure your branch is up to date with target branch
+2. Run all tests locally
+3. Fix any linting errors
+4. Update documentation if needed
+
+### PR Title Format
+Use same convention as commit messages:
+- `feat: Add document processing API`
+- `fix: Resolve evaluation timeout issue`
+- `docs: Update API documentation`
+
+### PR Description Template
+```markdown
+## Description
+Brief description of what this PR does
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Related Issue
+Fixes #<issue-number>
+
+## Changes Made
+- Change 1
+- Change 2
+- Change 3
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated
+- [ ] No new warnings introduced
+- [ ] Tests added for new features
+```
+
+### Review Process
+- At least 1 approval required before merging
+- All CI/CD checks must pass
+- Resolve all comments before merging
+- Use **Squash and Merge** for feature branches
+- Use **Merge Commit** for release and hotfix branches
+
+## Branch Protection Rules
+
+### Main Branch
+- ✅ Require pull request reviews (1+ approvals)
+- ✅ Require status checks to pass
+- ✅ Require branches to be up to date
+- ✅ Do not allow force pushes
+- ✅ Do not allow deletions
+
+### Develop Branch
+- ✅ Require pull request reviews
+- ✅ Require status checks to pass
+- ⚠️ Allow force pushes with lease (use carefully)
+- ✅ Do not allow deletions
+
+## Best Practices
+
+### DO
+✅ Keep commits small and focused
+✅ Write descriptive commit messages
+✅ Pull latest changes before starting work
+✅ Rebase feature branches on develop regularly
+✅ Delete branches after merging
+✅ Tag releases with semantic versioning
+✅ Update CHANGELOG.md for releases
+✅ Run tests before pushing
+✅ Review your own code before requesting review
+
+### DON'T
+❌ Commit directly to main or develop
+❌ Force push to shared branches (except with --force-with-lease)
+❌ Commit secrets, API keys, or .env files
+❌ Merge without review (unless hotfix emergency)
+❌ Leave WIP commits in PR history
+❌ Ignore merge conflicts
+❌ Push broken code
+❌ Commit commented-out code (remove it)
+❌ Use vague commit messages like "fix stuff" or "updates"
+
+## Semantic Versioning
+
+Format: `MAJOR.MINOR.PATCH` (e.g., `v1.2.3`)
+
+- **MAJOR**: Breaking changes (v1.0.0 → v2.0.0)
+- **MINOR**: New features, backwards compatible (v1.0.0 → v1.1.0)
+- **PATCH**: Bug fixes, backwards compatible (v1.0.0 → v1.0.1)
+
+### Examples
+- `v0.1.0` - Initial development
+- `v1.0.0` - First stable release
+- `v1.1.0` - Add FastAPI backend (new feature)
+- `v1.1.1` - Fix evaluation bug (patch)
+- `v2.0.0` - Remove Streamlit support (breaking change)
+
+## Project-Specific Workflow
+
+### Converting Streamlit to FastAPI + React
+
+#### Phase 1: Backend Setup
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/backend-setup
+
+# Create backend structure
+# Commit incrementally
+git commit -m "feat(backend): initialize FastAPI project structure"
+git commit -m "feat(backend): add Pydantic models"
+git commit -m "feat(backend): implement document upload endpoint"
+
+git push -u origin feature/backend-setup
+# Create PR to develop
+```
+
+#### Phase 2: Frontend Setup
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/frontend-setup
+
+# Create Next.js project
+git commit -m "feat(frontend): initialize Next.js 14 with TypeScript"
+git commit -m "feat(frontend): setup Tailwind CSS and shadcn/ui"
+git commit -m "feat(frontend): create API client"
+
+git push -u origin feature/frontend-setup
+# Create PR to develop
+```
+
+#### Phase 3: Feature Migration
+Each feature gets its own branch:
+- `feature/document-upload-ui`
+- `feature/evaluation-engine-api`
+- `feature/results-visualization`
+- `feature/http-polling-updates`
+
+## Emergency Procedures
+
+### Rollback Production
+```bash
+# Find the last good commit
+git log --oneline
+
+# Create hotfix to revert
+git checkout main
+git checkout -b hotfix/rollback-to-v1.0.0
+git revert <bad-commit-hash>
+git push -u origin hotfix/rollback-to-v1.0.0
+
+# Follow hotfix merge process
+```
+
+### Fix Accidentally Committed Secrets
+```bash
+# Remove from history (USE WITH CAUTION)
+git filter-branch --force --index-filter \
+  "git rm --cached --ignore-unmatch .env" \
+  --prune-empty --tag-name-filter cat -- --all
+
+# Force push (coordinate with team)
+git push origin --force --all
+
+# Immediately rotate compromised credentials
+```
+
+## Helpful Git Commands
+
+### Sync Feature Branch with Develop
+```bash
+git checkout feature/your-feature
+git fetch origin
+git rebase origin/develop
+# Resolve conflicts if any
+git push --force-with-lease
+```
+
+### Undo Last Commit (Not Pushed)
+```bash
+git reset --soft HEAD~1  # Keep changes staged
+git reset HEAD~1          # Keep changes unstaged
+git reset --hard HEAD~1   # Discard changes (CAREFUL!)
+```
+
+### View Branch History
+```bash
+git log --oneline --graph --decorate --all
+```
+
+### Stash Changes Temporarily
+```bash
+git stash save "WIP: working on evaluation"
+git checkout another-branch
+git checkout feature/your-feature
+git stash pop
+```
+
+### Clean Up Local Branches
+```bash
+# Delete merged branches
+git branch --merged | grep -v "\*\|main\|develop" | xargs -n 1 git branch -d
+
+# Prune remote-tracking branches
+git fetch --prune
+```

@@ -1,0 +1,407 @@
+# Project: RAG Evaluation System - Frontend/Backend Conversion
+
+## Architecture Overview
+- **Backend**: FastAPI (Python) - REST API
+- **Frontend**: React 18+ with TypeScript + Vite
+- **UI Library**: Material UI (MUI) v6
+- **State Management**: Zustand + React Query
+- **Charts**: Recharts for data visualization
+- **API Communication**: Axios
+- **Real-time Updates**: HTTP polling
+- **Testing**: Vitest + React Testing Library
+- **Build Tool**: Vite
+
+## Backend (FastAPI) Guidelines
+
+### Project Structure
+```
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI app initialization
+│   ├── config.py            # Configuration and environment variables
+│   ├── models/              # Pydantic models (request/response schemas)
+│   ├── routes/              # API route handlers
+│   │   ├── documents.py     # Document upload/processing endpoints
+│   │   ├── evaluation.py    # Evaluation endpoints
+│   │   ├── results.py       # Results retrieval endpoints
+│   │   └── export.py        # Export endpoints
+│   ├── services/            # Business logic (from rag_evaluator/)
+│   │   ├── document_processor.py
+│   │   ├── retrieval_systems.py
+│   │   ├── evaluation_engine.py
+│   │   └── langgraph_analyzer.py
+│   ├── utils/               # Helper functions
+│   └── dependencies.py      # FastAPI dependencies (auth, etc.)
+├── tests/
+├── requirements.txt
+└── .env
+```
+
+### Coding Standards
+- Use async/await for all I/O operations
+- Use Pydantic v2 models for request/response validation
+- Implement proper error handling with HTTPException
+- Use dependency injection for database, config, etc.
+- Add CORS middleware for frontend communication
+- Implement file upload with streaming for large files
+- Use background tasks for long-running evaluations
+- Add proper logging (structlog or loguru)
+- Return consistent API response format:
+  ```json
+  {
+    "success": true,
+    "data": {...},
+    "error": null,
+    "message": "Success"
+  }
+  ```
+
+### API Design
+- RESTful endpoints with proper HTTP methods
+- Use `/api/v1/` prefix for all routes
+- Implement pagination for list endpoints
+- Use query parameters for filtering/sorting
+- HTTP polling endpoints for evaluation progress
+- File uploads: multipart/form-data
+- Return 201 for creation, 200 for success, 422 for validation errors
+
+### Async Operations
+- Convert Streamlit session state to proper database or Redis cache
+- Use Celery or FastAPI BackgroundTasks for long evaluations
+- Implement task status tracking (pending, running, completed, failed)
+- Provide endpoints to check task status and cancel tasks
+
+## Frontend (React + Vite + MUI) Guidelines
+
+### Project Structure
+```
+frontend/
+├── public/                     # Static assets
+├── src/
+│   ├── main.tsx               # Application entry point
+│   ├── App.tsx                # Root component
+│   ├── vite-env.d.ts          # Vite type definitions
+│   ├── components/            # Reusable components
+│   │   ├── ui/                # Basic UI components
+│   │   ├── layout/            # Layout components
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── Footer.tsx
+│   │   ├── DocumentUploader/  # Feature components
+│   │   │   ├── DocumentUploader.tsx
+│   │   │   ├── DocumentUploader.test.tsx
+│   │   │   └── index.ts
+│   │   ├── SystemSelector/
+│   │   ├── EvaluationProgress/
+│   │   ├── ResultsVisualization/
+│   │   └── MetricsChart/
+│   ├── pages/                 # Page components
+│   │   ├── HomePage.tsx
+│   │   ├── UploadPage.tsx
+│   │   ├── EvaluationPage.tsx
+│   │   └── ResultsPage.tsx
+│   ├── hooks/                 # Custom React hooks
+│   │   ├── useEvaluation.ts
+│   │   ├── useResults.ts
+│   │   └── useApi.ts
+│   ├── services/              # API services
+│   │   ├── api.ts             # API client configuration
+│   │   ├── documentService.ts
+│   │   ├── evaluationService.ts
+│   │   └── resultsService.ts
+│   ├── store/                 # State management
+│   │   ├── useAppStore.ts     # Zustand store
+│   │   └── slices/
+│   ├── types/                 # TypeScript types
+│   │   ├── api.types.ts
+│   │   ├── document.types.ts
+│   │   ├── evaluation.types.ts
+│   │   └── results.types.ts
+│   ├── utils/                 # Helper functions
+│   │   ├── formatters.ts
+│   │   ├── validators.ts
+│   │   └── constants.ts
+│   ├── theme/                 # MUI theme configuration
+│   │   ├── theme.ts
+│   │   ├── palette.ts
+│   │   └── typography.ts
+│   └── styles/                # Global styles
+│       └── global.css
+├── .env.example               # Environment variables template
+├── .env.local                 # Local environment variables (gitignored)
+├── tsconfig.json              # TypeScript configuration
+├── tsconfig.node.json         # TypeScript config for Node
+├── vite.config.ts             # Vite configuration
+├── vitest.config.ts           # Vitest configuration
+├── package.json
+└── README.md
+```
+
+### Coding Standards
+- Use TypeScript for all code (strict mode enabled)
+- Use functional components with hooks (no class components)
+- Never use `any` type - use `unknown` if type is truly unknown
+- Use explicit return types for functions
+- Use interface for object types, type for unions/intersections
+- Implement proper error boundaries
+- Use React Query (TanStack Query) for server state management
+- Use Material UI (MUI) v6 components with sx prop for styling
+- Use Recharts for data visualization (integrated with MUI theme)
+- Implement proper loading states and skeletons (MUI Skeleton)
+- Add error handling with toast notifications (notistack or similar)
+- Make components accessible (ARIA labels, keyboard navigation)
+- Keep components small and focused (< 200 lines)
+- One component per file (except for small helper components)
+
+### Component Guidelines
+- Keep components small and focused (single responsibility)
+- Use composition over prop drilling (Context API)
+- Extract reusable logic into custom hooks
+- Use proper TypeScript types (no `any`)
+- Add JSDoc comments for complex components
+- Implement proper form validation (react-hook-form + zod)
+
+### State Management
+- Use **React Query (TanStack Query)** for server state (caching, refetching, polling)
+- Use **Zustand** for global client state (with persist and devtools middleware)
+- Use **useState** for local component state
+- Keep state as local as possible
+- Avoid prop drilling with composition patterns
+
+### API Integration
+- Create typed API client with error handling
+- Use environment variables for API base URL
+- Implement request/response interceptors
+- Add retry logic for failed requests
+- Handle authentication tokens properly
+- Use HTTP polling for real-time updates during evaluation
+
+## Conversion Strategy
+
+### Phase 1: Backend Setup
+1. Create FastAPI project structure
+2. Move `rag_evaluator/` modules to backend services
+3. Create Pydantic models for all data structures
+4. Implement API endpoints for each Streamlit feature:
+   - POST /api/v1/documents/upload
+   - GET /api/v1/documents/{id}
+   - POST /api/v1/evaluations/start
+   - GET /api/v1/evaluations/{id}/status (poll for updates)
+   - GET /api/v1/evaluations/{id}/results
+   - POST /api/v1/results/export
+
+### Phase 2: Frontend Setup
+1. Initialize Vite + React 18 project with TypeScript
+2. Set up Material UI (MUI) v6 with theme configuration
+3. Install and configure Recharts for data visualization
+4. Set up React Query and Zustand for state management
+5. Create basic layout with MUI components (AppBar, Drawer, etc.)
+6. Implement API client with Axios and typed interfaces
+7. Configure Vitest for testing
+
+### Phase 3: Feature Migration
+1. **Document Upload Page**
+   - File upload component with drag-and-drop (MUI dropzone)
+   - File validation and preview (MUI Card, Typography)
+   - Upload progress indicator (MUI LinearProgress, CircularProgress)
+
+2. **Configuration Page**
+   - Retrieval system selection (MUI Card with Checkbox)
+   - Parameter configuration forms (MUI TextField, Select, Slider)
+   - API key management (MUI TextField with password input)
+
+3. **Evaluation Page**
+   - Start/Cancel evaluation buttons (MUI Button)
+   - Real-time progress via HTTP polling
+   - Status indicators (MUI Chip, Alert)
+   - Progress stepper (MUI Stepper)
+
+4. **Results Page**
+   - Metrics visualization with Recharts (Bar, Radar, Line charts)
+   - Comparison tables (MUI Table, TableContainer)
+   - Radar charts for system comparison (Recharts integrated with MUI theme)
+   - Export functionality (MUI Menu, Button with download)
+
+### Phase 4: Enhancement
+1. Add user authentication (optional)
+2. Implement result persistence (database)
+3. Add evaluation history
+4. Implement caching for faster results
+5. Add unit and integration tests
+
+## Additional Rules
+- Use environment variables for all secrets and configuration
+- Implement proper CORS policy
+- Add rate limiting to API endpoints
+- Use Docker for deployment
+- Add health check endpoints
+- Implement proper logging and monitoring
+- Write OpenAPI/Swagger documentation (auto-generated by FastAPI)
+- Add input validation at both frontend and backend
+
+## Testing
+- Backend: pytest with pytest-asyncio (>80% coverage target)
+- Frontend: **Vitest** + React Testing Library
+- E2E: Playwright for critical user flows
+- API testing: pytest with httpx.AsyncClient
+- Mock external APIs (OpenAI, Cohere) in tests
+
+## Documentation
+- Add README for both frontend and backend
+- Document API endpoints with examples
+- Add architecture diagrams
+- Include setup instructions
+
+---
+
+## Git Workflow Integration
+
+**IMPORTANT**: This project follows strict Gitflow workflow. See `.cursor/rules/gitflow-rule.mdc` for complete details.
+
+### Quick Reference for Conversion Project
+
+#### Branch Strategy
+- **`main`**: Production-ready code only
+- **`develop`**: Integration branch (create from main first)
+- **Feature branches**: `feature/backend-setup`, `feature/frontend-setup`, etc.
+
+#### Starting the Conversion
+```bash
+# 1. Create develop branch if it doesn't exist
+git checkout -b develop
+git push -u origin develop
+
+# 2. Start backend work
+git checkout -b feature/backend-setup
+
+# 3. Make changes and commit incrementally
+git commit -m "feat(backend): initialize FastAPI project structure"
+git commit -m "feat(backend): add Pydantic models for API schemas"
+git commit -m "feat(backend): implement document upload endpoint"
+
+# 4. Push and create PR
+git push -u origin feature/backend-setup
+# Create PR: feature/backend-setup → develop
+```
+
+#### Commit Message Format
+Always use conventional commits:
+- `feat(backend):` - New backend features
+- `feat(frontend):` - New frontend features  
+- `fix(backend):` - Backend bug fixes
+- `fix(frontend):` - Frontend bug fixes
+- `refactor:` - Code refactoring
+- `docs:` - Documentation updates
+- `test:` - Test additions/updates
+- `chore:` - Dependencies, configs, etc.
+
+#### Conversion Feature Branches
+Create separate branches for each major component:
+- `feature/backend-project-structure`
+- `feature/backend-pydantic-models`
+- `feature/backend-api-endpoints`
+- `feature/backend-http-polling`
+- `feature/frontend-vite-react-setup`
+- `feature/frontend-mui-theme-config`
+- `feature/frontend-api-client`
+- `feature/frontend-document-upload-ui`
+- `feature/frontend-evaluation-ui`
+- `feature/frontend-results-visualization-recharts`
+
+---
+
+## YOUR CUSTOM RULES BELOW
+<!-- Add your specific rules, preferences, and requirements here -->
+
+### Backend Preferences
+- Use **PostgreSQL** for persistent storage (evaluation history)
+- Use **Redis** for task queue and caching
+- Use **Celery** for background task processing (long evaluations)
+- Implement **JWT authentication** for API security (optional initially)
+- Use **python-multipart** for file uploads
+- Add **rate limiting** with slowapi
+
+### Frontend Preferences
+- Use **Material UI (MUI) v6** for all UI components
+- Use **Recharts** for data visualization (integrate with MUI theme colors)
+- Use **React Query (TanStack Query)** for server state
+- Use **Zustand** for lightweight client state (with persist and devtools)
+- Use **react-hook-form** + **zod** for form validation
+- Use **notistack** (MUI-compatible) for toast notifications
+- Implement **dark mode** support with MUI theme toggling
+- Use **MUI sx prop** for styling (not inline styles or CSS modules)
+- Use **react-router-dom** for client-side routing
+- Use **@mui/x-data-grid** for complex tables (optional)
+
+### API Design Preferences
+- All responses follow consistent format:
+  ```json
+  {
+    "success": boolean,
+    "data": object | array | null,
+    "error": string | null,
+    "message": string,
+    "timestamp": "ISO-8601"
+  }
+  ```
+- Use **snake_case** for API request/response fields
+- Use **camelCase** for TypeScript/JavaScript
+- Implement **CORS** with explicit origins (not wildcard)
+- Add **request validation** with Pydantic
+- Include **OpenAPI/Swagger** docs at `/docs`
+- Add **health check** endpoint at `/api/v1/health`
+
+### Development Setup
+- Use **Docker Compose** for local development
+- Separate containers: FastAPI backend, React+Vite frontend, PostgreSQL, Redis
+- Use **Makefile** for common commands
+- Environment variables in `.env.example` (template)
+- Actual values in `.env` (gitignored)
+- Frontend dev server on port 3000 (Vite)
+- Backend API server on port 8000 (FastAPI)
+
+### Testing Requirements
+- Backend: pytest with >80% coverage target
+- Frontend: **Vitest** + React Testing Library
+- E2E: Playwright for critical user flows
+- API tests: Use httpx.AsyncClient
+- Mock external APIs (OpenAI, Cohere) in tests
+- Component tests: Test all critical UI components
+- Hook tests: Test custom hooks with renderHook
+
+### Documentation Requirements
+- API documentation: Auto-generated with FastAPI
+- Frontend components: JSDoc comments
+- README files in both backend/ and frontend/
+- Architecture diagram (use Mermaid in markdown)
+- Setup instructions for developers
+- Deployment guide
+
+### Code Quality
+- Backend: Use **black** + **isort** + **ruff** for linting
+- Frontend: Use **ESLint** + **Prettier**
+- Pre-commit hooks with **husky**
+- Type checking: **mypy** (backend), **tsc** (frontend)
+- No `any` types in TypeScript
+- All functions have type hints in Python
+
+### Security
+- Never commit `.env` files
+- API keys stored in environment variables only
+- Implement input sanitization
+- Use parameterized queries (prevent SQL injection)
+- Add CSRF protection
+- Rate limit API endpoints
+- Validate file uploads (type, size, content)
+
+### Performance
+- Implement caching for evaluation results (Redis)
+- Use connection pooling for database
+- Optimize bundle size (code splitting)
+- Lazy load large components
+- Implement pagination for large datasets
+- Add loading states and skeleton screens
+- Use React.memo for expensive components
+
+

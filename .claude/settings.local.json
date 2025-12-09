@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\Users\\nickm\\Documents\\evaluation_retrieval_system\" /B)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(uvicorn:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(pip show:*)",
+      "Bash(set PYTHONPATH=%PYTHONPATH%)",
+      "Bash(C:UsersnickmAppDataLocalPackagesPythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0LocalCachelocal-packagesPython313site-packages)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 32572 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 78696,76188 -Force\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

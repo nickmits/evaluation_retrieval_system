@@ -83,3 +83,29 @@ Thumbs.db
 temp/
 tmp/
 
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Frontend build outputs
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Frontend environment
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# Frontend testing
+frontend/coverage/
+
+# Backend specific
+backend/.env
+backend/temp_uploads/
+temp_uploads/
+

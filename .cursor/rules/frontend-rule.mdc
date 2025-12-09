@@ -1,0 +1,1040 @@
+---
+alwaysApply: true
+---
+
+# Frontend Development Rules - React + TypeScript + MUI
+
+## Technology Stack
+- **Framework**: React 18+ with TypeScript
+- **UI Library**: Material UI (MUI) v6 (latest)
+- **Charts**: Recharts for data visualization
+- **Testing**: Vitest + React Testing Library
+- **Build Tool**: Vite
+- **Package Manager**: npm or pnpm
+
+## Project Structure
+
+```
+frontend/
+├── public/                     # Static assets
+├── src/
+│   ├── main.tsx               # Application entry point
+│   ├── App.tsx                # Root component
+│   ├── vite-env.d.ts          # Vite type definitions
+│   ├── components/            # Reusable components
+│   │   ├── ui/                # Basic UI components
+│   │   │   ├── Button.tsx
+│   │   │   ├── Card.tsx
+│   │   │   └── Input.tsx
+│   │   ├── layout/            # Layout components
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── Footer.tsx
+│   │   ├── DocumentUploader/  # Feature components
+│   │   │   ├── DocumentUploader.tsx
+│   │   │   ├── DocumentUploader.test.tsx
+│   │   │   └── index.ts
+│   │   ├── SystemSelector/
+│   │   ├── EvaluationProgress/
+│   │   ├── ResultsVisualization/
+│   │   └── MetricsChart/
+│   ├── pages/                 # Page components
+│   │   ├── HomePage.tsx
+│   │   ├── UploadPage.tsx
+│   │   ├── EvaluationPage.tsx
+│   │   └── ResultsPage.tsx
+│   ├── hooks/                 # Custom React hooks
+│   │   ├── useEvaluation.ts
+│   │   ├── useResults.ts
+│   │   └── useApi.ts
+│   ├── services/              # API services
+│   │   ├── api.ts             # API client configuration
+│   │   ├── documentService.ts
+│   │   ├── evaluationService.ts
+│   │   └── resultsService.ts
+│   ├── store/                 # State management
+│   │   ├── useAppStore.ts     # Zustand store
+│   │   └── slices/
+│   ├── types/                 # TypeScript types
+│   │   ├── api.types.ts
+│   │   ├── document.types.ts
+│   │   ├── evaluation.types.ts
+│   │   └── results.types.ts
+│   ├── utils/                 # Helper functions
+│   │   ├── formatters.ts
+│   │   ├── validators.ts
+│   │   └── constants.ts
+│   ├── theme/                 # MUI theme configuration
+│   │   ├── theme.ts
+│   │   ├── palette.ts
+│   │   └── typography.ts
+│   └── styles/                # Global styles
+│       └── global.css
+├── .env.example               # Environment variables template
+├── .env.local                 # Local environment variables (gitignored)
+├── tsconfig.json              # TypeScript configuration
+├── tsconfig.node.json         # TypeScript config for Node
+├── vite.config.ts             # Vite configuration
+├── vitest.config.ts           # Vitest configuration
+├── package.json
+└── README.md
+```
+
+## TypeScript Standards
+
+### General Rules
+- Use **strict mode** (`"strict": true` in tsconfig.json)
+- **Never use `any`** - use `unknown` if type is truly unknown
+- Use **explicit return types** for functions
+- Use **interface** for object types, **type** for unions/intersections
+- Enable all strict type-checking options
+
+### Type Definitions
+```typescript
+// Good: Explicit types
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+type Status = 'pending' | 'running' | 'completed' | 'failed';
+
+function getUser(id: string): Promise<User> {
+  // ...
+}
+
+// Bad: Implicit any
+function getUser(id) {
+  // ...
+}
+
+// Bad: Using any
+function processData(data: any) {
+  // ...
+}
+```
+
+### Props Types
+```typescript
+// Good: Define props interface
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: 'contained' | 'outlined' | 'text';
+  disabled?: boolean;
+  children?: React.ReactNode;
+}
+
+export const Button: React.FC<ButtonProps> = ({ 
+  label, 
+  onClick, 
+  variant = 'contained',
+  disabled = false 
+}) => {
+  // ...
+};
+
+// Alternative: Using type
+type ButtonProps = {
+  label: string;
+  onClick: () => void;
+  variant?: 'contained' | 'outlined' | 'text';
+};
+```
+
+## Component Standards
+
+### Functional Components Only
+- Use **functional components** with hooks (no class components)
+- Use **React.FC** or explicit return type
+- Keep components **small and focused** (< 200 lines)
+- **One component per file** (except for small helper components)
+
+### Component Structure
+```typescript
+import React from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { useEvaluation } from '@/hooks/useEvaluation';
+import type { EvaluationConfig } from '@/types/evaluation.types';
+
+interface EvaluationControlProps {
+  config: EvaluationConfig;
+  onStart: () => void;
+  onCancel: () => void;
+}
+
+/**
+ * EvaluationControl component handles starting and canceling evaluations
+ * @param config - Evaluation configuration
+ * @param onStart - Callback when evaluation starts
+ * @param onCancel - Callback when evaluation is canceled
+ */
+export const EvaluationControl: React.FC<EvaluationControlProps> = ({
+  config,
+  onStart,
+  onCancel,
+}) => {
+  const { isRunning, progress } = useEvaluation(config);
+
+  const handleStart = () => {
+    // Validation logic
+    onStart();
+  };
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h6">Evaluation Controls</Typography>
+      <Button 
+        variant="contained" 
+        onClick={handleStart}
+        disabled={isRunning}
+      >
+        Start Evaluation
+      </Button>
+      {isRunning && (
+        <Button 
+          variant="outlined" 
+          onClick={onCancel}
+          color="error"
+        >
+          Cancel
+        </Button>
+      )}
+    </Box>
+  );
+};
+```
+
+### Component Organization
+```typescript
+// 1. Imports (grouped)
+import React, { useState, useEffect } from 'react';
+import { Box, Button } from '@mui/material';
+import { CustomComponent } from '@/components';
+import { useCustomHook } from '@/hooks';
+import type { CustomType } from '@/types';
+
+// 2. Types/Interfaces
+interface ComponentProps {
+  // ...
+}
+
+// 3. Component definition
+export const Component: React.FC<ComponentProps> = (props) => {
+  // 4. Hooks (in order: state, effects, custom hooks)
+  const [state, setState] = useState();
+  useEffect(() => {}, []);
+  const custom = useCustomHook();
+
+  // 5. Event handlers
+  const handleClick = () => {};
+
+  // 6. Helper functions
+  const formatData = () => {};
+
+  // 7. Early returns
+  if (!data) return null;
+
+  // 8. JSX
+  return <div>...</div>;
+};
+```
+
+## Material UI (MUI) Guidelines
+
+### Theme Configuration
+```typescript
+// src/theme/theme.ts
+import { createTheme } from '@mui/material/styles';
+
+export const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark: '#1565c0',
+    },
+    secondary: {
+      main: '#9c27b0',
+    },
+    error: {
+      main: '#d32f2f',
+    },
+    success: {
+      main: '#2e7d32',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontSize: '2.5rem',
+      fontWeight: 500,
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none', // Disable uppercase
+          borderRadius: 8,
+        },
+      },
+    },
+  },
+});
+
+// src/main.tsx
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { theme } from './theme/theme';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>
+);
+```
+
+### Using MUI Components
+```typescript
+// Good: Use MUI components with sx prop
+import { Box, Button, Card, CardContent, Typography } from '@mui/material';
+
+export const Example: React.FC = () => {
+  return (
+    <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
+      <CardContent>
+        <Typography variant="h5" component="h2" gutterBottom>
+          Title
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          <Button variant="contained" color="primary">
+            Primary
+          </Button>
+          <Button variant="outlined" color="secondary">
+            Secondary
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+```
+
+### Styling Approaches
+```typescript
+// 1. Inline sx prop (preferred for simple styles)
+<Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
+  Content
+</Box>
+
+// 2. Styled components (for reusable styled components)
+import { styled } from '@mui/material/styles';
+import { Paper } from '@mui/material';
+
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius * 2,
+}));
+
+// 3. useTheme hook (for conditional styling)
+import { useTheme } from '@mui/material/styles';
+
+const Component = () => {
+  const theme = useTheme();
+  return <Box sx={{ color: theme.palette.primary.main }}>...</Box>;
+};
+```
+
+### Responsive Design
+```typescript
+// Use MUI breakpoints for responsive design
+<Box
+  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', sm: 'row' },
+    gap: { xs: 1, sm: 2, md: 3 },
+    p: { xs: 2, sm: 3, md: 4 },
+  }}
+>
+  <Typography 
+    variant="h4" 
+    sx={{ 
+      fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } 
+    }}
+  >
+    Responsive Title
+  </Typography>
+</Box>
+```
+
+## Recharts Integration
+
+### Chart Components
+```typescript
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { useTheme } from '@mui/material/styles';
+
+interface MetricsChartProps {
+  data: Array<{
+    name: string;
+    value: number;
+  }>;
+}
+
+export const MetricsChart: React.FC<MetricsChartProps> = ({ data }) => {
+  const theme = useTheme();
+
+  return (
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar 
+          dataKey="value" 
+          fill={theme.palette.primary.main}
+          radius={[8, 8, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
+// Radar chart for metrics comparison
+export const MetricsRadarChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const theme = useTheme();
+
+  return (
+    <ResponsiveContainer width="100%" height={400}>
+      <RadarChart data={data}>
+        <PolarGrid />
+        <PolarAngleAxis dataKey="metric" />
+        <PolarRadiusAxis angle={90} domain={[0, 1]} />
+        <Radar
+          name="System A"
+          dataKey="systemA"
+          stroke={theme.palette.primary.main}
+          fill={theme.palette.primary.main}
+          fillOpacity={0.6}
+        />
+        <Radar
+          name="System B"
+          dataKey="systemB"
+          stroke={theme.palette.secondary.main}
+          fill={theme.palette.secondary.main}
+          fillOpacity={0.6}
+        />
+        <Legend />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+};
+```
+
+## State Management
+
+### Local State (useState)
+```typescript
+// Use for component-specific state
+const [isOpen, setIsOpen] = useState(false);
+const [inputValue, setInputValue] = useState('');
+const [selectedItems, setSelectedItems] = useState<string[]>([]);
+```
+
+### Zustand (Global State)
+```typescript
+// src/store/useAppStore.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+interface EvaluationState {
+  evaluationId: string | null;
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  progress: number;
+  results: any | null;
+  setEvaluationId: (id: string) => void;
+  setStatus: (status: EvaluationState['status']) => void;
+  setProgress: (progress: number) => void;
+  setResults: (results: any) => void;
+  reset: () => void;
+}
+
+export const useEvaluationStore = create<EvaluationState>()(
+  devtools(
+    persist(
+      (set) => ({
+        evaluationId: null,
+        status: 'idle',
+        progress: 0,
+        results: null,
+        setEvaluationId: (id) => set({ evaluationId: id }),
+        setStatus: (status) => set({ status }),
+        setProgress: (progress) => set({ progress }),
+        setResults: (results) => set({ results }),
+        reset: () => set({ 
+          evaluationId: null, 
+          status: 'idle', 
+          progress: 0, 
+          results: null 
+        }),
+      }),
+      { name: 'evaluation-store' }
+    )
+  )
+);
+
+// Usage in component
+const Component = () => {
+  const { status, progress, setStatus } = useEvaluationStore();
+  // ...
+};
+```
+
+### React Query (Server State)
+```typescript
+// src/hooks/useEvaluation.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { evaluationService } from '@/services/evaluationService';
+
+export const useEvaluation = (evaluationId: string) => {
+  return useQuery({
+    queryKey: ['evaluation', evaluationId],
+    queryFn: () => evaluationService.getEvaluation(evaluationId),
+    enabled: !!evaluationId,
+    refetchInterval: 5000, // Poll every 5 seconds
+  });
+};
+
+export const useStartEvaluation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: evaluationService.startEvaluation,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['evaluations'] });
+      queryClient.setQueryData(['evaluation', data.id], data);
+    },
+  });
+};
+```
+
+## Custom Hooks
+
+### Hook Guidelines
+- Prefix with `use`
+- Extract reusable logic
+- Return clear, predictable values
+- Document with JSDoc
+
+### Examples
+```typescript
+// src/hooks/useDebounce.ts
+import { useEffect, useState } from 'react';
+
+export const useDebounce = <T>(value: T, delay: number = 500): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+```
+
+## API Integration
+
+### API Client Setup
+```typescript
+// src/services/api.ts
+import axios, { AxiosError } from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor
+apiClient.interceptors.response.use(
+  (response) => response.data,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+### Service Layer
+```typescript
+// src/services/evaluationService.ts
+import { apiClient } from './api';
+import type { 
+  Evaluation, 
+  EvaluationConfig, 
+  EvaluationResult 
+} from '@/types/evaluation.types';
+
+export const evaluationService = {
+  async startEvaluation(config: EvaluationConfig): Promise<Evaluation> {
+    return apiClient.post('/evaluations/start', config);
+  },
+
+  async getEvaluation(id: string): Promise<Evaluation> {
+    return apiClient.get(`/evaluations/${id}`);
+  },
+
+  async getEvaluationResults(id: string): Promise<EvaluationResult> {
+    return apiClient.get(`/evaluations/${id}/results`);
+  },
+
+  async cancelEvaluation(id: string): Promise<void> {
+    return apiClient.post(`/evaluations/${id}/cancel`);
+  },
+
+  async listEvaluations(): Promise<Evaluation[]> {
+    return apiClient.get('/evaluations');
+  },
+};
+
+// src/services/documentService.ts
+export const documentService = {
+  async uploadDocument(file: File): Promise<{ id: string; name: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return apiClient.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  async getDocument(id: string): Promise<any> {
+    return apiClient.get(`/documents/${id}`);
+  },
+};
+```
+
+## Testing Standards
+
+### Vitest Configuration
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.test.tsx',
+        '**/*.spec.tsx',
+      ],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});
+
+// src/test/setup.ts
+import '@testing-library/jest-dom';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+});
+```
+
+### Component Testing
+```typescript
+// src/components/Button/Button.test.tsx
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders button with label', () => {
+    render(<Button label="Click me" onClick={() => {}} />);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('calls onClick when clicked', () => {
+    const handleClick = vi.fn();
+    render(<Button label="Click me" onClick={handleClick} />);
+    
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('is disabled when disabled prop is true', () => {
+    render(<Button label="Click me" onClick={() => {}} disabled />);
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+});
+```
+
+### Hook Testing
+```typescript
+// src/hooks/useDebounce.test.ts
+import { describe, it, expect, vi } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useDebounce } from './useDebounce';
+
+describe('useDebounce', () => {
+  it('debounces value changes', async () => {
+    const { result, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: 'initial', delay: 500 } }
+    );
+
+    expect(result.current).toBe('initial');
+
+    rerender({ value: 'updated', delay: 500 });
+    expect(result.current).toBe('initial');
+
+    await waitFor(() => expect(result.current).toBe('updated'), { timeout: 600 });
+  });
+});
+```
+
+## Form Handling
+
+### React Hook Form + Zod
+```typescript
+// Install: pnpm add react-hook-form zod @hookform/resolvers
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { TextField, Button, Box } from '@mui/material';
+
+const evaluationSchema = z.object({
+  documentId: z.string().min(1, 'Document is required'),
+  numQuestions: z.number().min(3).max(20),
+  includeMultiHop: z.boolean(),
+  systems: z.array(z.string()).min(1, 'Select at least one system'),
+});
+
+type EvaluationFormData = z.infer<typeof evaluationSchema>;
+
+export const EvaluationForm: React.FC = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EvaluationFormData>({
+    resolver: zodResolver(evaluationSchema),
+    defaultValues: {
+      numQuestions: 5,
+      includeMultiHop: false,
+      systems: [],
+    },
+  });
+
+  const onSubmit = async (data: EvaluationFormData) => {
+    console.log(data);
+    // Submit to API
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
+      <TextField
+        {...register('documentId')}
+        label="Document ID"
+        error={!!errors.documentId}
+        helperText={errors.documentId?.message}
+        fullWidth
+        sx={{ mb: 2 }}
+      />
+      <TextField
+        {...register('numQuestions', { valueAsNumber: true })}
+        label="Number of Questions"
+        type="number"
+        error={!!errors.numQuestions}
+        helperText={errors.numQuestions?.message}
+        fullWidth
+        sx={{ mb: 2 }}
+      />
+      <Button 
+        type="submit" 
+        variant="contained" 
+        disabled={isSubmitting}
+        fullWidth
+      >
+        {isSubmitting ? 'Submitting...' : 'Start Evaluation'}
+      </Button>
+    </Box>
+  );
+};
+```
+
+## Error Handling
+
+### Error Boundaries
+```typescript
+// src/components/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Box, Typography, Button } from '@mui/material';
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="h4" color="error" gutterBottom>
+            Something went wrong
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {this.state.error?.message}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => window.location.reload()}
+          >
+            Reload Page
+          </Button>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+## Performance Optimization
+
+### Code Splitting
+```typescript
+// Lazy load pages
+import { lazy, Suspense } from 'react';
+import { CircularProgress, Box } from '@mui/material';
+
+const EvaluationPage = lazy(() => import('./pages/EvaluationPage'));
+const ResultsPage = lazy(() => import('./pages/ResultsPage'));
+
+export const App = () => {
+  return (
+    <Suspense fallback={
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    }>
+      <Routes>
+        <Route path="/evaluation" element={<EvaluationPage />} />
+        <Route path="/results" element={<ResultsPage />} />
+      </Routes>
+    </Suspense>
+  );
+};
+```
+
+### Memoization
+```typescript
+import { memo, useMemo, useCallback } from 'react';
+
+// Memoize expensive components
+export const ExpensiveComponent = memo<ComponentProps>(({ data }) => {
+  return <div>{/* ... */}</div>;
+});
+
+// Memoize expensive computations
+const Component = ({ data }) => {
+  const processedData = useMemo(() => {
+    return data.map(item => expensiveOperation(item));
+  }, [data]);
+
+  const handleClick = useCallback(() => {
+    console.log('clicked');
+  }, []);
+
+  return <div>...</div>;
+};
+```
+
+## Best Practices
+
+### DO ✅
+- Use TypeScript strict mode
+- Use functional components with hooks
+- Keep components small and focused (< 200 lines)
+- Extract reusable logic into custom hooks
+- Use MUI components with sx prop for styling
+- Use Recharts for data visualization
+- Implement proper error boundaries
+- Add loading states for async operations
+- Use React Query for server state
+- Use Zustand for global client state
+- Write tests for critical components
+- Use semantic HTML elements
+- Implement proper accessibility (ARIA labels)
+- Use meaningful variable and function names
+- Add JSDoc comments for complex functions
+
+### DON'T ❌
+- Don't use `any` type
+- Don't use class components
+- Don't use inline styles (use sx prop)
+- Don't mutate state directly
+- Don't forget error handling
+- Don't skip loading states
+- Don't ignore TypeScript errors
+- Don't use index as key in lists
+- Don't make unnecessary re-renders
+- Don't forget to cleanup useEffect
+- Don't use magic numbers (use constants)
+- Don't commit .env files
+- Don't ignore accessibility
+- Don't skip tests for critical features
+
+## File Naming Conventions
+- **Components**: PascalCase - `DocumentUploader.tsx`
+- **Hooks**: camelCase with `use` prefix - `useEvaluation.ts`
+- **Services**: camelCase - `evaluationService.ts`
+- **Types**: camelCase with `.types` suffix - `evaluation.types.ts`
+- **Utils**: camelCase - `formatters.ts`
+- **Tests**: Same as file with `.test` suffix - `Button.test.tsx`
+
+## Environment Variables
+```bash
+# .env.example
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+VITE_APP_NAME=RAG Evaluation Platform
+```
+
+Access in code:
+```typescript
+const apiUrl = import.meta.env.VITE_API_BASE_URL;
+```
+
+## Build and Development
+
+### Scripts
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "type-check": "tsc --noEmit"
+  }
+}
+```
+
+## Vite Configuration
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+});
+```
